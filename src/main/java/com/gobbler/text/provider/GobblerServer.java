@@ -2,7 +2,7 @@ package com.gobbler.text.provider;
 
 import static com.gobbler.text.provider.Constants.CACHE_SIZE;
 import static com.gobbler.text.provider.Constants.PORT_NUMBER;
-import static com.gobbler.text.provider.Constants.supportedCommands;
+import static com.gobbler.text.provider.Constants.SUPPORTED_COMMANDS;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -85,6 +85,9 @@ public class GobblerServer
             final String buffer = validateCommands(inputLine);
             if (isNumeric(buffer))
             {
+                // If value is a number always look in cache first
+                // only if its not present in the cache we iterate
+                // on the file provided.
                 final Long key = Long.parseLong(buffer);
                 if (cache.get(key) != null)
                 {
@@ -149,7 +152,7 @@ public class GobblerServer
             return "ERR";
         }
 
-        if (parts[0] != null && !supportedCommands.contains(parts[0]))
+        if (parts[0] != null && !SUPPORTED_COMMANDS.contains(parts[0]))
         {
             return "ERR";
         }
@@ -169,16 +172,32 @@ public class GobblerServer
         return "ERR";
     }
 
-    private static String getLineFromFile (LineIterator lit, final long lineNumber)
+    /**
+     * The main method which uses the Apache Common's {@link LineIterator} to parse the line
+     * from the file used for the input.
+     *
+     * Loading the file in memory would be a terrible choice and wouldn't scale well if the
+     * file becomes huge. This approach only uses the iterator to traverse line by line and
+     * would be significantly faster.
+     *
+     * I have also used a {@link LRUCache} to speed up the look up if the same commands are
+     * run.
+     *
+     * @param lineIterator the {@link LineIterator} to use.
+     * @param lineNumber   the line number to extract.
+     * @return the value present in the line number.
+     * @throws IOException
+     */
+    private static String getLineFromFile (LineIterator lineIterator, final long lineNumber)
             throws IOException
     {
         try
         {
-            lit = FileUtils.lineIterator(fileFromPath, "UTF-8");
+            lineIterator = FileUtils.lineIterator(fileFromPath, "UTF-8");
             long count = 0;
-            while (lit.hasNext())
+            while (lineIterator.hasNext())
             {
-                String line = lit.nextLine();
+                String line = lineIterator.nextLine();
                 count++;
                 if (lineNumber - 1 == count)
                 {
@@ -189,7 +208,7 @@ public class GobblerServer
             }
         } finally
         {
-            LineIterator.closeQuietly(lit);
+            LineIterator.closeQuietly(lineIterator);
         }
 
         return "ERR";

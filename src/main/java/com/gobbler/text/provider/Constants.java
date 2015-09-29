@@ -12,5 +12,5 @@ public class Constants
 
     public static int PORT_NUMBER = 10322;
     public static int CACHE_SIZE = 10000;
-    public static final List<String> supportedCommands = of("GET");
+    public static final List<String> SUPPORTED_COMMANDS = of("GET");
 }
