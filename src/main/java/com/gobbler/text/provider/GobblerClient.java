@@ -1,68 +1,68 @@
 package com.gobbler.text.provider;
 
-import static com.google.common.collect.ImmutableList.of;
-
+import static com.gobbler.text.provider.Constants.PORT_NUMBER;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.List;
-
-import com.google.common.collect.ImmutableList;
+import java.net.UnknownHostException;
 
 /**
  * Created by vm023561 on 9/28/15.
  */
-public class GobblerClient extends Thread
+public class GobblerClient
 {
-    private Socket gobblerClientSocket;
-
-
-    private static String output = null;
-
-    public GobblerClient (final Socket gobblerClientSocket)
+    public static void main (String[] args) throws IOException
     {
-        this.gobblerClientSocket = gobblerClientSocket;
-    }
 
-    public void run ()
-    {
-        InputStream inp = null;
-        BufferedReader brinp = null;
-        DataOutputStream out = null;
+        String serverHostname = new String("localhost");
+
+        if (args.length > 0)
+        {
+            serverHostname = args[0];
+        }
+        System.out.println(
+                String.format("Attempting to connect to Gobbler Server running at %s on port %d",
+                        serverHostname, PORT_NUMBER));
+
+        Socket echoSocket = null;
+        PrintWriter out = null;
+        BufferedReader in = null;
+
         try
         {
-            inp = gobblerClientSocket.getInputStream();
-            brinp = new BufferedReader(new InputStreamReader(inp));
-            out = new DataOutputStream(gobblerClientSocket.getOutputStream());
+            echoSocket = new Socket(serverHostname, PORT_NUMBER);
+            out = new PrintWriter(echoSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(
+                    echoSocket.getInputStream()));
+        } catch (UnknownHostException e)
+        {
+            final String message = String.format("Cannot resolve host %s", serverHostname);
+            System.err.println(message);
+            System.exit(1);
         } catch (IOException e)
         {
-            return;
+            System.err.println("Couldn't get I/O for "
+                    + "the connection to: " + serverHostname);
+            System.exit(1);
         }
 
-        String line;
-        while (true)
+        BufferedReader stdIn = new BufferedReader(
+                new InputStreamReader(System.in));
+        String userInput;
+
+        System.out.print("input: ");
+        while ((userInput = stdIn.readLine()) != null)
         {
-            try
-            {
-                line = brinp.readLine();
-                if ((line == null) || line.equalsIgnoreCase("QUIT"))
-                {
-                    gobblerClientSocket.close();
-                    return;
-                } else
-                {
-                    out.writeBytes(line + "\n\r");
-                    out.flush();
-                }
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-                return;
-            }
+            out.println(userInput);
+            System.out.println("CLIENT: " + in.readLine());
+            System.out.print("input: ");
         }
 
+        out.close();
+        in.close();
+        stdIn.close();
+        echoSocket.close();
     }
 }

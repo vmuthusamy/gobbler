@@ -1,6 +1,8 @@
 package com.gobbler.text.provider;
 
-import static com.google.common.collect.ImmutableList.of;
+import static com.gobbler.text.provider.Constants.CACHE_SIZE;
+import static com.gobbler.text.provider.Constants.PORT_NUMBER;
+import static com.gobbler.text.provider.Constants.supportedCommands;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,24 +11,24 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
 /**
- * Created by vm023561 on 9/28/15.
+ * The Server implementation of the Gobbler project.
+ * @author Venkatesh Muthusamy
  */
 public class GobblerServer
 {
-    //TODO: need to configure to load from a yml file or xml file for configurability
-    private static int PORT_NUMBER = 10322;
+
+    private static final LRUCache<Long, String> cache = new LRUCache<Long, String>(CACHE_SIZE);
+
     private static Socket clientSocket = null;
     private static LineIterator lineIterator = null;
     private static File fileFromPath = null;
 
     private static ServerSocket serverSocket = null;
-    private static final List<String> supportedCommands = of("GET");
 
     public static void main (String args[]) throws IOException
     {
@@ -57,7 +59,7 @@ public class GobblerServer
             System.exit(1);
 
         }
-        System.out.println("Waiting for connection.....");
+        System.out.println(String.format("Gobbler Server Started at %d........", PORT_NUMBER));
         try
         {
             clientSocket = serverSocket.accept();
@@ -67,7 +69,7 @@ public class GobblerServer
             System.exit(1);
         }
 
-        System.out.println("Connection successful");
+        System.out.println("Connection with a Client:");
         System.out.println("Waiting for input.....");
 
         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),
@@ -83,16 +85,19 @@ public class GobblerServer
             final String buffer = validateCommands(inputLine);
             if (isNumeric(buffer))
             {
-                out.println(getLineFromFile(lineIterator, Long.parseLong(buffer)));
+                final Long key = Long.parseLong(buffer);
+                if (cache.get(key) != null)
+                {
+                    out.println(cache.get(key));
+                } else
+                {
+                    out.println(getLineFromFile(lineIterator, Long.parseLong(buffer)));
+                }
             }else
             {
                 out.println(buffer);
             }
 
-            if (inputLine.equals("Bye."))
-            {
-                break;
-            }
         }
 
         out.close();
@@ -177,13 +182,14 @@ public class GobblerServer
                 count++;
                 if (lineNumber - 1 == count)
                 {
+                    cache.put(lineNumber, line);
                     return line;
                 }
                 // do something with line
             }
         } finally
         {
-            // LineIterator.closeQuietly(lit);
+            LineIterator.closeQuietly(lit);
         }
 
         return "ERR";

@@ -2,16 +2,13 @@ package com.gobbler.text.provider;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
 /**
- * Created by vm023561 on 9/26/15.
+ * This is an internal class used by this project. Its implementation can change at any time.
+ * @author Venkatesh Muthusamy
  */
 public class Utility
 {
