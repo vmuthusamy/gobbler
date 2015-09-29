@@ -6,7 +6,8 @@ import java.util.Map;
 import com.google.common.base.Objects;
 
 /**
- * Created by vm023561 on 9/28/15.
+ * A linked hashmap implementation of LRU cache used by the loader
+ * @author vm023561
  */
 public class LRUCache<K, V>
 {
