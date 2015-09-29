@@ -1,6 +1,7 @@
 package com.gobbler.text.provider;
 
 import static com.gobbler.text.provider.Constants.PORT_NUMBER;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,7 +10,18 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Created by vm023561 on 9/28/15.
+ * The client used to communicate with the Gobbler Server.
+ * @author vm023561
+ *
+ * Example usage
+ * <pre>
+ * GET 10000
+ * # Gets the line number 9999 from the file.
+ * GET -10000
+ * # Returns an ERR message from server
+ *
+ * </pre>
+ *
  */
 public class GobblerClient
 {
@@ -55,11 +67,18 @@ public class GobblerClient
         System.out.print("input: ");
         while ((userInput = stdIn.readLine()) != null)
         {
+
             out.println(userInput);
             System.out.println("CLIENT: " + in.readLine());
             System.out.print("input: ");
         }
 
+        closeAll(echoSocket, out, in, stdIn);
+    }
+
+    private static void closeAll (Socket echoSocket, PrintWriter out, BufferedReader in,
+            BufferedReader stdIn) throws IOException
+    {
         out.close();
         in.close();
         stdIn.close();

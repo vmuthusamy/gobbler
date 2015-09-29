@@ -15,6 +15,8 @@ import java.net.Socket;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
+import com.google.common.io.Closeables;
+
 /**
  * The Server implementation of the Gobbler project.
  * @author Venkatesh Muthusamy
@@ -82,6 +84,7 @@ public class GobblerServer
         while ((inputLine = in.readLine()) != null)
         {
             System.out.println("Server: " + inputLine);
+
             final String buffer = validateCommands(inputLine);
             if (isNumeric(buffer))
             {
@@ -103,11 +106,16 @@ public class GobblerServer
 
         }
 
-        out.close();
-        in.close();
-        clientSocket.close();
-        serverSocket.close();
+        closeAll(out, in);
 
+    }
+
+    private static void closeAll (PrintWriter out, BufferedReader in) throws IOException
+    {
+        Closeables.close(out, true);
+        Closeables.close(in, true);
+        Closeables.close(clientSocket, true);
+        Closeables.close(serverSocket, true);
     }
 
     private static boolean isNumeric (String buffer)
